@@ -24,35 +24,34 @@ bedrock_kb = boto3.client(
 
 def valid_prompt(prompt, model_id):
     """
-    Classify a prompt into:
-        "heavy"  - heavy machinery questions
-        "greet"  - greeting / hello
-        "other"  - anything unrelated
-
-    Uses Titan model for classification.
+    Classify a prompt into categories A/B/C/D.
     """
 
     classification_prompt = f"""
 Classify the user's message into exactly ONE label:
-- heavy
-- greet
-- other
+- A
+- B
+- C
+- D
 
 Definitions:
-• greet → hi, hello, hey, good morning, emotional greetings.
-• heavy → excavators, bulldozers, forklifts, cranes, dump trucks, loaders,
-  engines, specs, maintenance, hydraulic systems, etc.
-• other → everything else.
+A → Greeting (hi, hello)
+B → Heavy machinery general (e.g., forklift, bulldozer, excavator)
+C → Heavy machinery technical (specs, engine, hydraulics, capacity)
+D → Irrelevant / anything else
 
 Examples:
 User: "hi"
-Label: greet
+Label: A
 
 User: "what is a forklift"
-Label: heavy
+Label: B
 
-User: "phishing"
-Label: other
+User: "engine capacity of komatsu pc200"
+Label: C
+
+User: "what is phishing"
+Label: D
 
 Now classify:
 User: "{prompt}"
@@ -72,19 +71,20 @@ Label:
             })
         )
 
-        raw = json.loads(response["body"].read())["results"][0]["outputText"].strip().lower()
+        raw = json.loads(response["body"].read())["results"][0]["outputText"].strip().upper()
 
-        # Normalize to the 3 allowed labels
-        if "heavy" in raw:
-            return "heavy"
-        if "greet" in raw or "hello" in raw or "hi" in raw:
-            return "greet"
-        return "other"
+        # Normalize labels
+        if raw.startswith("A"):
+            return "A"
+        if raw.startswith("B"):
+            return "B"
+        if raw.startswith("C"):
+            return "C"
+        return "D"
 
     except Exception as e:
         print(f"Error in valid_prompt: {e}")
-        return "other"
-
+        return "D"
 
 # -----------------------------
 # KB RETRIEVAL

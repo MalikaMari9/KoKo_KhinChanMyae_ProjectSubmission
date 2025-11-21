@@ -68,21 +68,25 @@ if prompt:
     cls = valid_prompt(prompt, model_id)
 
     # Greeting → simple reply
-    if cls == "greet":
+    if cls == "A":
         answer = "Hello! I'm a heavy machinery assistant. What can I help you with?"
-    # Not heavy machinery → reject
-    elif cls == "other":
+
+    elif cls == "D":
         answer = "I can only answer heavy machinery questions. Ask me about forklifts, excavators, bulldozers, etc."
-    else:
-        # heavy machinery → fetch KB only if specific
+
+    elif cls == "B":
+        # General heavy machinery → no KB
+        kb_results = []
+        answer = generate_response(prompt, kb_results, model_id, temperature, top_p)
+
+    elif cls == "C":
+        # Technical heavy machinery → use KB if specific
         if is_specific_query(prompt):
             kb_results = query_knowledge_base(prompt, kb_id)
         else:
             kb_results = []
+        answer = generate_response(prompt, kb_results, model_id, temperature, top_p)
 
-        answer = generate_response(
-            prompt, kb_results, model_id, temperature, top_p
-        )
 
     # display assistant message
     with st.chat_message("assistant"):
